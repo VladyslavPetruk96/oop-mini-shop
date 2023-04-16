@@ -20,9 +20,14 @@ class ElementAttribure {
 }
 
 class Component {
-  constructor(renderHookId) {
+  constructor(renderHookId, shouldRender = true) {
     this.hookId = renderHookId;
+    if (shouldRender) {
+      this.render();
+    }
   }
+
+  render() {}
 
   createRootElement(tag, cssClasses, attributes) {
     const rootElement = document.createElement(tag);
@@ -64,20 +69,28 @@ class ShoppingCart extends Component {
     this.cartItems = updatedItems;
   }
 
+  orderProducts() {
+    console.log("Ordering...");
+    console.log(this.items);
+  }
+
   render() {
     const cartEl = this.createRootElement("section", "cart");
     cartEl.innerHTML = `
       <h2>Total: \$${0}</h2>
       <button>Oreder now!</button>
     `;
+    const orderButton = cartEl.querySelector("button");
+    orderButton.addEventListener("click", () => this.orderProducts());
     this.totalOutput = cartEl.querySelector("h2");
   }
 }
 
 class ProductItem extends Component {
   constructor(product, renderHookId) {
-    super(renderHookId);
+    super(renderHookId, false);
     this.product = product;
+    this.render();
   }
 
   addToCart() {
@@ -103,42 +116,55 @@ class ProductItem extends Component {
 }
 
 class ProductList extends Component {
-  products = [
-    new Product(
-      "A Pillow",
-      "https://www.slumbr.com/wp-rckXdgae/wp-content/uploads/2017/09/Why-should-I-upgrade-to-a-premium-pillow-932x666.jpg",
-      "A soft pillow!",
-      19.99
-    ),
-    new Product(
-      "A Carpet",
-      "http://www.homespaservices.net/uploads/1/1/2/2/112288729/blog-1_orig.png",
-      "A carpet whitch you might like!",
-      12.59
-    ),
-  ];
+  products = [];
 
   constructor(renderHookId) {
     super(renderHookId);
+    this.fetchProducts();
+  }
+
+  fetchProducts() {
+    this.products = [
+      new Product(
+        "A Pillow",
+        "https://www.slumbr.com/wp-rckXdgae/wp-content/uploads/2017/09/Why-should-I-upgrade-to-a-premium-pillow-932x666.jpg",
+        "A soft pillow!",
+        19.99
+      ),
+      new Product(
+        "A Carpet",
+        "http://www.homespaservices.net/uploads/1/1/2/2/112288729/blog-1_orig.png",
+        "A carpet whitch you might like!",
+        12.59
+      ),
+    ];
+    this.renderProducts();
+  }
+
+  renderProducts() {
+    for (const prod of this.products) {
+      const productItem = new ProductItem(prod, "prod-list");
+    }
   }
 
   render() {
     this.createRootElement("ul", "product-list", [
       new ElementAttribure("id", "prod-list"),
     ]);
-    for (const prod of this.products) {
-      const productItem = new ProductItem(prod, "prod-list");
-      productItem.render();
+    if (this.products && this.products.length > 0) {
+      this.renderProducts();
     }
   }
 }
 
 class Shop {
+  constructor() {
+    this.render();
+  }
+
   render() {
     this.cart = new ShoppingCart("app");
-    this.cart.render();
-    const productList = new ProductList("app");
-    productList.render();
+    new ProductList("app");
   }
 }
 
@@ -147,7 +173,6 @@ class App {
 
   static init() {
     const shop = new Shop();
-    shop.render();
     this.cart = shop.cart;
   }
 
